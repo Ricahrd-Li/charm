@@ -12,10 +12,18 @@ int main(int argc, char ** argv)
 
   // open the user binary for this rank in a unique namespace
   {
-    static const char FUNCPTR_SHIM_SUFFIX[] = ".user";
+    static const char exe_suffix[] = STRINGIFY(CMK_POST_EXE);
+    static const char suffix[] = STRINGIFY(CMK_USER_SUFFIX) "." STRINGIFY(CMK_SHARED_SUF);
+    static constexpr size_t exe_suffix_len = sizeof(exe_suffix)-1;
 
     std::string binary_path{ampi_binary_path};
-    binary_path += FUNCPTR_SHIM_SUFFIX;
+    if (exe_suffix_len > 0)
+    {
+      size_t pos = binary_path.length() - exe_suffix_len;
+      if (!binary_path.compare(pos, exe_suffix_len, exe_suffix))
+        binary_path.resize(pos);
+    }
+    binary_path += suffix;
 
     const Lmid_t lmid = rank_count++ == 0 ? LM_ID_BASE : LM_ID_NEWLM;
     myexe = dlmopen(lmid, binary_path.c_str(), RTLD_NOW|RTLD_LOCAL);

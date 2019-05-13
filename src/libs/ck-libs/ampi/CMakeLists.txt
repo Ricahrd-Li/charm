@@ -19,6 +19,7 @@ if(${CMK_CAN_LINK_FORTRAN})
 endif()
 
 # FIXME: add fsglobals/pipglobals
+# TODO
 
 configure_file(ampiCC        ${CMAKE_BINARY_DIR}/bin/ampicc         COPYONLY)
 configure_file(ampiCC        ${CMAKE_BINARY_DIR}/bin/               COPYONLY)

@@ -180,6 +180,10 @@ if(${CMK_COMPILER_KNOWS_LIFETIMEDSE})
   set(OPTS_CXX "${OPTS_CXX} -fno-lifetime-dse")
 endif()
 
+check_cxx_compiler_flag("-fvisibility=hidden" CMK_COMPILER_KNOWS_FVISIBILITY)
+
+check_cxx_compiler_flag("-Wl,-undefined,dynamic_lookup" CMK_LINKER_KNOWS_UNDEFINED)
+
 # Complex tests
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
@@ -314,6 +318,19 @@ int main()
   return __executable_start;
 }
 " CMK_HAS_EXECUTABLE_START)
+
+check_c_source_compiles("
+__attribute__((visibility(\"default\"))) int myfunc();
+int myfunc()
+{
+  return 0;
+}
+int main()
+{
+  return 0;
+}
+" CMK_HAS_ATTRIBUTE_VISIBILITY)
+
 
 check_cxx_source_compiles("
 #include <iterator>

@@ -2994,4 +2994,40 @@ inline void ampiVerifyNodeinit(const char * routineName)
   TCHARM_API_TRACE(routineName, "ampi"); \
   AMPI_DEBUG_ARGS(routineName, __VA_ARGS__)
 
+
+#ifdef _WIN32
+
+#ifndef WIN32_LEAN_AND_MEAN
+# define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+# define NOMINMAX
+#endif
+#include <windows.h>
+
+typedef HMODULE SharedObject;
+
+#define dlopen(name, flags) LoadLibrary(name)
+#define dlsym(handle, name) ((void(*)())GetProcAddress((handle), (name)))
+#define dlclose(handle) FreeLibrary(handle)
+#define dlerror() ""
+
+#else
+
+#if CMK_DLL_USE_DLOPEN
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+#ifndef __USE_GNU
+# define __USE_GNU
+#endif
+#include <dlfcn.h>
+#endif
+
+typedef void * SharedObject;
+
+#endif
+
+int AMPI_Main_Dispatch(SharedObject myexe, int argc, char ** argv);
+
 #endif // _AMPIIMPL_H

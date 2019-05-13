@@ -11778,3 +11778,41 @@ int AMPI_GPU_Invoke(cudaStream_t stream)
 #endif // CMK_CUDA
 
 #include "ampi.def.h"
+
+#if defined _WIN32 || CMK_DLL_USE_DLOPEN
+int AMPI_Main_Dispatch(SharedObject myexe, int argc, char ** argv)
+{
+  typedef int (*maintype)(int, char **);
+  typedef void (*fmpimaintype)(void);
+
+  auto AMPI_Main_cpp_ptr = (maintype)dlsym(myexe, "AMPI_Main_cpp");
+  if (AMPI_Main_cpp_ptr)
+    return AMPI_Main_cpp_ptr(argc, argv);
+
+  auto AMPI_Main_c_ptr = (maintype)dlsym(myexe, "AMPI_Main_c");
+  if (AMPI_Main_c_ptr)
+    return AMPI_Main_c_ptr(argc, argv);
+
+  auto AMPI_Main_ptr = (maintype)dlsym(myexe, "AMPI_Main");
+  if (AMPI_Main_ptr)
+    return AMPI_Main_ptr(argc, argv);
+
+  auto fmpi_main_ptr = (fmpimaintype)dlsym(myexe, STRINGIFY(FTN_NAME(MPI_MAIN,mpi_main)));
+  if (fmpi_main_ptr)
+  {
+    fmpi_main_ptr();
+    return 0;
+  }
+
+  auto export_ptr = (fmpimaintype)dlsym(myexe, "AMPI_Main_fortran_export");
+  if (export_ptr)
+  {
+    export_ptr();
+    return 0;
+  }
+
+  CkAbort("Could not find any AMPI entry points!");
+
+  return 1;
+}
+#endif
