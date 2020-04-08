@@ -193,11 +193,17 @@ CmiStartFn mymain(int argc, char *argv[])
 
   int otherPe = CmiMyPe() ^ 1;
 
+  CmiPrintf("[%d] before cpuaffinity\n", CmiMyPe());
+
   // Set runtime cpuaffinity
   CmiInitCPUAffinity(argv);
 
+  CmiPrintf("[%d] before cpu topology\n", CmiMyPe());
+
   // Initialize CPU topology
   CmiInitCPUTopology(argv);
+
+  CmiPrintf("[%d] before node barrier\n", CmiMyPe());
 
   // Wait for all PEs of the node to complete topology init
   CmiNodeAllBarrier();

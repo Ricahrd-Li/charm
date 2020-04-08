@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include "converse.h"
+#include "cmitrackmessages.h"
 #include "sockRoutines.h"
 
 #define DEBUGP(x)  /** CmiPrintf x; */
@@ -242,6 +243,7 @@ static void cpuTopoHandler(void *m)
   hostTable.clear();
   CmiFree(msg);
 
+  CMI_UNIQ_MSG_ID(topomsg) = -3;
   CmiSyncBroadcastAllAndFree(sizeof(nodeTopoMsg)+CmiNumPes()*sizeof(int), (char *)topomsg);
 }
 
@@ -309,6 +311,7 @@ static void *emptyReduction(int *size, void *data, void **remote, int count)
   *size = sizeof(topoDoneMsg);
   topoDoneMsg *msg = (topoDoneMsg *)CmiAlloc(sizeof(topoDoneMsg));
   CmiSetHandler((char *)msg, CpvAccess(topoDoneHandlerIdx));
+  //CMI_UNIQ_MSG_ID(msg) = -6;
   return msg;
 }
 
@@ -512,6 +515,8 @@ extern "C" void LrtsInitCpuTopo(char **argv)
   CmiNodeAllBarrier();
   if (_noip) return; 
 
+  CmiPrintf("[%d] before sending a hostnameMsg\n", CmiMyPe());
+
     /* prepare a msg to send */
   msg = (hostnameMsg *)CmiAlloc(sizeof(hostnameMsg)+sizeof(_procInfo));
   msg->n = 1;
@@ -522,7 +527,10 @@ extern "C" void LrtsInitCpuTopo(char **argv)
   msg->procs[0].ncores = CmiNumCores();
   msg->procs[0].rank = 0;
   msg->procs[0].nodeID = 0;
+  CMI_UNIQ_MSG_ID(msg) = -4;
   CmiReduce(msg, sizeof(hostnameMsg)+sizeof(_procInfo), combineMessage);
+
+  CmiPrintf("[%d] after CmiReduce of hostnameMsg\n", CmiMyPe());
 
   // blocking here (wait for broadcast from PE0 to reach all PEs in this node)
   while (topoInProgress) {
@@ -535,6 +543,7 @@ extern "C" void LrtsInitCpuTopo(char **argv)
   if (CmiNumNodes() > 1) {
     topoDoneMsg *msg2 = (topoDoneMsg *)CmiAlloc(sizeof(topoDoneMsg));
     CmiSetHandler((char *)msg2, CpvAccess(topoDoneHandlerIdx));
+    //CMI_UNIQ_MSG_ID(msg2) = -5;
     CmiReduce(msg2, sizeof(topoDoneMsg), emptyReduction);
     if ((CmiMyPe() == 0) || (CmiNumSpanTreeChildren(CmiMyPe()) > 0)) {
       // wait until everyone else has topo info

@@ -54,6 +54,7 @@
 #include <string.h>
 #include <vector>
 #include "hrctimer.h"
+#include "cmitrackmessages.h"
 #ifndef __STDC_FORMAT_MACROS
 # define __STDC_FORMAT_MACROS
 #endif
@@ -110,6 +111,8 @@ void CmiPoolAllocInit(int numBins);
 #if CMK_CONDS_USE_SPECIAL_CODE
 CmiSwitchToPEFnPtr CmiSwitchToPE;
 #endif
+
+CpvExtern(int, msgTrackHandler);
 
 CpvExtern(int, _traceCoreOn);   /* projector */
 void CcdModuleInit(char **);
@@ -1690,6 +1693,14 @@ void CmiHandleMessage(void *msg)
           CmiAbort("Msg handler does not exist, possible race condition during init\n");
         }
 #endif
+  // Do not send an ack for an ack message
+  // Also, do not send an ack for already processed messages
+  if(CmiGetHandler(msg) != CpvAccess(msgTrackHandler) && CMI_UNIQ_MSG_ID(msg) != -10) {
+#if CMI_QD
+    CpvAccess(cQdState)->mCreated++;
+#endif
+    sendTrackingAck((char *)msg);
+  }
 	(h->hdlr)(msg,h->userPtr);
 #if CMK_TRACE_ENABLED
 	/* setMemoryStatus(0) */ /* charmdebug */
@@ -3283,6 +3294,7 @@ void CmiInitMsgHeader(void *msg, int size) {
     CMI_ZC_MSGTYPE(msg) = CMK_REG_NO_ZC_MSG;
 #endif
     CMI_MSG_NOKEEP(msg) = 0;
+    CMI_UNIQ_MSG_ID(msg) = -1;
   }
 }
 
@@ -4027,6 +4039,8 @@ void ConverseCommonInit(char **argv)
 #endif
 
   CmiPersistentInit();
+
+  CmiMessageTrackerInit();
 
   // Initialize converse handlers for supporting generic Direct Nocopy API
   CmiOnesidedDirectInit();

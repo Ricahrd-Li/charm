@@ -10,6 +10,7 @@
 #include <middle.h>
 #include <cklists.h>
 #include <objid.h>
+#include "cmitrackmessages.h"
 
 #ifndef CkIntbits
 #define CkIntbits (sizeof(int)*8)
@@ -327,7 +328,7 @@ public:
       env->pathHistory.reset();
 #endif
 
-
+      CMI_UNIQ_MSG_ID(env) = -1;
       return env;
     }
     void reset() {

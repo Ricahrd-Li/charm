@@ -1,12 +1,17 @@
 #include "ck.h"
 #include "queueing.h"
+#include "cmitrackmessages.h"
 
 CkpvDeclare(size_t *, _offsets);
 
 void *CkAllocSysMsg(const CkEntryOptions *opts)
 {
-  if(opts == NULL)
+  if(opts == NULL) {
     return CkpvAccess(_msgPool)->get();
+    //char *msg = (char *)CkpvAccess(_msgPool)->get();
+    //CMI_UNIQ_MSG_ID(msg) = -1;
+    //return (void *)msg;
+  }
 
   envelope *env = _allocEnv(ForChareMsg, 0, opts->getPriorityBits(), GroupDepNum{(int)opts->getGroupDepNum()});
   setMemoryTypeMessage(env);

@@ -1444,6 +1444,8 @@ void _skipCldEnqueue(int pe,envelope *env, int infoFn)
     else
 #endif
     {
+
+      addToTracking((char *)env);
       CqsEnqueueGeneral((Queue)CpvAccess(CsdSchedQueue),
           env, env->getQueueing(),env->getPriobits(),
           (unsigned int *)env->getPrioPtr());
